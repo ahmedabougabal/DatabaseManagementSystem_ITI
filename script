@@ -1,0 +1,46 @@
+# !/user/bin/bash
+
+
+PS3="Choose a Number: "
+
+function table {
+    cd $1
+    echo connected
+}
+
+
+select var in CreateDB ListDB ConnectToDB DropDB
+do
+case $var in
+"CreateDB")
+read -p "Please Enter DataBase Name: " DBname
+if [ -e ./DataBases/$DBname ]
+then echo "Database Already Exist"
+else 
+mkdir ./DataBases/$DBname
+echo Database Created
+fi
+;;
+
+"ListDB")
+ls ./DataBases
+;;
+
+"ConnectToDB")
+read -p "Please Enter DataBase Name: " DBname
+if [ -e ./DataBases/$DBname ]
+then table ./DataBases/$DBname
+else echo "Database doesn't Exist"
+fi
+;;
+
+"DropDB")
+read -p "Please Enter DataBase Name: " DBname
+if [ -e ./DataBases/$DBname ]
+then rm -r ./DataBases/$DBname 
+else echo "Database doesn't Exist"
+fi
+;;
+esac
+done
+
