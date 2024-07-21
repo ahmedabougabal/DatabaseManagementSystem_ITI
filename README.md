@@ -4,6 +4,7 @@
 ![Stars](https://img.shields.io/github/stars/ahmedabougabal/DatabaseManagementSystem_ITI?style=social)
 ![Watchers](https://img.shields.io/github/watchers/ahmedabougabal/DatabaseManagementSystem_ITI?style=social)
 ![Issues](https://img.shields.io/github/issues/ahmedabougabal/DatabaseManagementSystem_ITI)
+![Pull Requests](https://img.shields.io/github/issues-pr/ahmedabougabal/DatabaseManagementSystem_ITI)
 ![License](https://img.shields.io/github/license/ahmedabougabal/DatabaseManagementSystem_ITI)
 
 ## Overview
