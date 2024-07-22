@@ -38,7 +38,7 @@ function isUnique() {
 function CreateTable() {
   echo "please enter a table name"
   read tableName
-  if [[ ! "$tableName" =~ ^[!@#^*$~()_-]$ ]]; then
+  if [[ "$tableName" =~ [!@#^*$~()_-] ]]; then
     echo "invalid table name"
     return 1
   fi
