@@ -74,7 +74,6 @@ function CreateTable() {
     if [[ "$response" == "no" ]]; then
       break
     fi
-    else
     echo "please type in the column name"
     read -r colName
     echo "please type in the column type"
