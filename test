@@ -28,13 +28,6 @@ fromr=$from
 
 
 
-
-
-
-
-
-
-
 #where
 wherer=0
 function where {
@@ -105,7 +98,6 @@ wherer=$condition_row
 
 where
 echo this is the result of where : $wherer
-sed -n $wherer test-data
 
 
 
