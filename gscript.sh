@@ -38,7 +38,7 @@ function isUnique() {
 function CreateTable() {
   echo "please enter a table name"
   read tableName
-  if [[ "$tableName" =~ [!@#^*$~()_-] ]]; then
+  if [[ ! "$tableName" =~ ^[!@#^*$~()_-]$ ]]; then
     echo "invalid table name"
     return 1
   fi
@@ -48,7 +48,8 @@ function CreateTable() {
   fi
   #! meta file creation
   metaFile="$tableName.meta"
-  touch "$metaFile"
+  metaFile="$tableName.meta"
+  touch metaFile
 
   #* ask for the primary key
   declare -i pk
@@ -123,3 +124,7 @@ function table_menu {
     esac
   done
 }
+
+
+
+table_menu
