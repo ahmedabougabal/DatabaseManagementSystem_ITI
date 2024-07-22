@@ -9,6 +9,14 @@ function table {
 }
 
 
+
+
+
+if [[ ! -e ./DataBases ]]
+then mkdir DataBases
+fi
+
+
 select var in CreateDB ListDB ConnectToDB DropDB
 do
 case $var in
