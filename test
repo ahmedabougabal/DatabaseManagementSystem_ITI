@@ -92,12 +92,25 @@ wherer=$condition_row
 
 
 
+#delete part
+
 # from
 # echo this is the result of from $fromr 
-
-
 where
 echo this is the result of where : $wherer
+wherer=($wherer)
+del=""
+for i in "${wherer[@]}"
+do
+del+=$i"d;"
+done
+sed -i "$del" test-data 
+
+
+
+
+
+
 
 
 
