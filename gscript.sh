@@ -38,7 +38,7 @@ function isUnique() {
 function CreateTable() {
   echo "please enter a table name"
   read tableName
-  if [[ !"$tableName" =~ ^[!@#^*$~()_-] ]]; then
+  if [[ "$tableName" =~ [!@#^*$~()_-] ]]; then
     echo "invalid table name"
     return 1
   fi
@@ -47,7 +47,7 @@ function CreateTable() {
     return 1
   fi
   #! meta file creation
-  metaFile = "$tableName.meta"
+  metaFile="$tableName.meta"
   touch metaFile
 
   #* ask for the primary key
@@ -59,7 +59,7 @@ function CreateTable() {
   if ! pkValidate; then
     return 1
   fi
-  if !isUnique; then
+  if ! isUnique; then
     return 1
   fi
 
