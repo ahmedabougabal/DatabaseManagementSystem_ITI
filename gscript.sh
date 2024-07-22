@@ -48,7 +48,6 @@ function CreateTable() {
   fi
   #! meta file creation
   metaFile="$tableName.meta"
-  metaFile="$tableName.meta"
   touch metaFile
 
   #* ask for the primary key
