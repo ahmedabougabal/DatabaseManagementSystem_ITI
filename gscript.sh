@@ -221,6 +221,7 @@ function table_menu {
       # Implement select from table functionality
       ;;
     6)
+
       from
       where
       wherer=($wherer)
@@ -230,6 +231,9 @@ function table_menu {
       del+=$i"d;"
       done
       sed -i "$del" ./data/$fromr
+
+      # Implement delete from table functionality
+
       ;;
     7)
       # Implement update table functionality
