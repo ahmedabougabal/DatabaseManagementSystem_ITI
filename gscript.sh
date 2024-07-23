@@ -4,9 +4,8 @@ export LC_COLLATE=C #! enable case sensitivity
 
 function table {
   cd $1
-  echo "Connected to database: $(basename $1)" #basename here returns the name of the DB
-  #without mentioning the preceding path
-  table_menu #function call
+  echo "Connected to database: $(basename $1)" #basename here returns the name of the DB without mentioning the preceding path
+  table_menu
 }
 
 function isTableFound() {
@@ -48,16 +47,16 @@ function CreateTable() {
   fi
   #! meta file creation
   metaFile="$tableName.meta"
-  touch metaFile
+  touch "$metaFile"
 
   #* ask for the primary key
-  declare -i pk
   echo "Please type in the primary key column name"
   read pkColName
   echo "Please type in the primary key type (int/string)"
   read pkType
 
   # primary key validation (check for both NULL and uniqueness)
+  pk="${pkColName}:${pkType}"
   if ! pkValidate; then
     return 1
   fi
@@ -66,7 +65,7 @@ function CreateTable() {
   fi
 
   #* adding new columns
-  cols=("$pkColName:$pkType")
+  cols=("$pk")
   while true; do
     echo "Do you want to add another column? (yes/no)"
     # The -r option in the read command is used to prevent backslashes from being interpreted as escape characters
@@ -78,15 +77,14 @@ function CreateTable() {
     read -r colName
     echo "please type in the column type"
     read -r colType
-    cols+={"$colName:$colType"}
+    cols+={"${colName}:${colType}"}
   done
 
-  #* now that everything is validated, write the metadata into the file
-  for col in "$cols[@]"; do
-    echo $col >>$metaFile
+  #* now that everything is validated
+  for col in "${cols[@]}"; do
+    echo "$col" >>"$metaFile"
   done
-  echo "Table $tableName is created successfully with primary key '$pk'."
-
+  echo "Table $tableName is created successfully with primary key '$pkColName'."
 }
 
 function table_menu {
@@ -122,7 +120,5 @@ function table_menu {
     esac
   done
 }
-
-
 
 table_menu
