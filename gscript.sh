@@ -106,6 +106,97 @@ function ListTables() {
   fi
 }
 
+
+
+
+
+#from
+fromr=""
+function from {
+l=$(ls ./data)
+from=0
+echo select the table 
+select fr in $l
+do 
+if [[ $fr == "" ]]
+then 
+echo enter valid number
+else
+from=$fr
+break
+fi
+done
+fromr=$from 
+}
+#from end
+
+
+#where
+wherer=0
+function where {
+meta=$(awk ' BEGIN{FS=","} {  
+  for(i = 1; i<=NF ; i++)
+    {
+    print $i
+    }
+    } END{} ' ./meta/$fromr.meta)
+wtype=-1
+wno=-1
+echo select the condition column
+select wh in $meta
+do
+if [[ $wh == "" ]]
+then 
+echo enter valid number
+else
+wtype=$wh
+wno=$REPLY
+break
+fi
+done
+
+if [[ $(echo $wtype |cut -d ":" -f 2) == "int" ]]
+then 
+
+echo select the condition op
+select op in "==" "<=" ">=" "<" ">"
+do
+if [[ $op == "" ]]
+then 
+echo enter valid number
+else
+read -p "Please Enter condition value: " condval
+if [[ $condval =~ ^[1-9]+$ ]]
+then 
+condition_row=$(awk ' BEGIN{FS=":"} { 
+if ( $'$wno' '$op' '$condval' ){
+print NR
+}
+} END{ } ' ./data/$fromr )
+break
+else echo not a number
+fi
+fi
+done
+else 
+read -p "Please Enter condition value: " condval
+condition_row=$(
+awk -v condv="$condval" ' BEGIN{FS=":"} { 
+if ( $'$wno' == condv){
+print NR
+}
+} END{ } ' ./data/$fromr
+)
+fi
+wherer=$condition_row
+}
+
+
+
+
+
+
+
 function table_menu {
   while true; do
     echo "1) CreateTable     2) ListTables      3) DropTable"
@@ -130,7 +221,19 @@ function table_menu {
       # Implement select from table functionality
       ;;
     6)
+
+      from
+      where
+      wherer=($wherer)
+      del=""
+      for i in "${wherer[@]}"
+      do
+      del+=$i"d;"
+      done
+      sed -i "$del" ./data/$fromr
+
       # Implement delete from table functionality
+
       ;;
     7)
       # Implement update table functionality
@@ -154,3 +257,6 @@ function table_menu {
     esac
   done
 }
+
+
+table_menu
