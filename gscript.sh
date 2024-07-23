@@ -76,10 +76,10 @@ function CreateTable() {
     echo "Do you want to add another column? (yes/no)"
     # The -r option in the read command is used to prevent backslashes from being interpreted as escape characters
     read -r response
-    if [[ "$response" =~ ^[Nn][Oo]?$ ]]; then
+    if [[ "$response" =~ ^[Nn]+$ ]]; then
       break
     fi
-    if [[ "$response" =~ ^[yY][Ee][Ss]?$ ]]; then
+    if [[ "$response" =~ ^[Yy]+$ ]]; then
       echo "please type in the column name"
       read -r colName
       echo "please type in the column type"
@@ -111,7 +111,6 @@ function ListTables() {
   fi
 }
 
-
 function DropTable() {
   echo "please enter the table name you wish to drop"
   read dropFile
@@ -133,90 +132,156 @@ function DropTable() {
   fi
 }
 
+function validateInsertedVals() {
+  local -n columns_ref=$1
+  local -n validated_vals_ref=$2
+  declare -A colTypes
 
+  # Read column names and types from the meta file
+  for col in "${columns_ref[@]}"; do
+    colName="${col%%:*}"
+    colType="${col##*:}"
+    colTypes["$colName"]="$colType"
+  done
 
+  # Collect values for each column
+  for col in "${columns_ref[@]}"; do
+    colName="${col%%:*}"
+    colType="${col##*:}"
 
+    while true; do
+      echo "Please enter value for $colName ($colType):"
+      read value
+
+      # Validate value based on its type
+      if [[ "$colType" == "int" ]]; then
+        if ! [[ "$value" =~ ^-?[0-9]+$ ]]; then
+          echo "Invalid value for $colName. It should be an integer."
+          continue
+        fi
+      elif [[ "$colType" == "string" ]]; then
+        if [[ -z "$value" ]]; then
+          echo "Invalid value for $colName. It should be a non-empty string."
+          continue
+        fi
+      fi
+
+      # Check for uniqueness if it's the primary key
+      if [[ "${col%%:*}" == "${columns_ref[0]%%:*}" ]]; then
+        pk="$value"
+        if ! pkValidate; then
+          continue
+        fi
+        if ! isUnique; then
+          continue
+        fi
+      fi
+
+      # Add value to the validated values array
+      validated_vals_ref+=("$value")
+      break
+    done
+  done
+}
+
+function InsertIntoTable() {
+  echo "Please enter the table name to insert into:"
+  read tableName
+
+  if ! isTableFound "$tableName"; then
+    echo "Table $tableName does not exist."
+    return 1
+  fi
+
+  local metaFile="meta/$tableName.meta"
+  local dataFile="data/$tableName"
+
+  # Read column names and types from the meta file
+  IFS=',' read -r -a columns <<<"$(cat "$metaFile")"
+  declare -a validated_vals
+
+  # Validate and collect user input
+  validateInsertedVals columns validated_vals
+
+  # Join values with colon delimiter and append to the data file
+  IFS=:
+  echo "${validated_vals[*]}" >>"$dataFile"
+  echo "Record inserted successfully into table $tableName."
+}
 
 #from
 fromr=""
 function from {
-l=$(ls ./data)
-from=0
-echo select the table 
-select fr in $l
-do 
-if [[ $fr == "" ]]
-then 
-echo enter valid number
-else
-from=$fr
-break
-fi
-done
-fromr=$from 
+  l=$(ls ./data)
+  from=0
+  echo select the table
+  select fr in $l; do
+    if [[ $fr == "" ]]; then
+      echo enter valid number
+    else
+      from=$fr
+      break
+    fi
+  done
+  fromr=$from
 }
 #from end
-
 
 #where
 wherer=0
 function where {
-meta=$(awk ' BEGIN{FS=","} {  
+  meta=$(awk ' BEGIN{FS=","} {  
   for(i = 1; i<=NF ; i++)
     {
     print $i
     }
     } END{} ' ./meta/$fromr.meta)
-wtype=-1
-wno=-1
-echo select the condition column
-select wh in $meta
-do
-if [[ $wh == "" ]]
-then 
-echo enter valid number
-else
-wtype=$wh
-wno=$REPLY
-break
-fi
-done
+  wtype=-1
+  wno=-1
+  echo select the condition column
+  select wh in $meta; do
+    if [[ $wh == "" ]]; then
+      echo enter valid number
+    else
+      wtype=$wh
+      wno=$REPLY
+      break
+    fi
+  done
 
-if [[ $(echo $wtype |cut -d ":" -f 2) == "int" ]]
-then 
+  if [[ $(echo $wtype | cut -d ":" -f 2) == "int" ]]; then
 
-echo select the condition op
-select op in "==" "<=" ">=" "<" ">"
-do
-if [[ $op == "" ]]
-then 
-echo enter valid number
-else
-read -p "Please Enter condition value: " condval
-if [[ $condval =~ ^[1-9]+$ ]]
-then 
-condition_row=$(awk ' BEGIN{FS=":"} { 
+    echo select the condition op
+    select op in "==" "<=" ">=" "<" ">"; do
+      if [[ $op == "" ]]; then
+        echo enter valid number
+      else
+        read -p "Please Enter condition value: " condval
+        if [[ $condval =~ ^[1-9]+$ ]]; then
+          condition_row=$(awk ' BEGIN{FS=":"} { 
 if ( $'$wno' '$op' '$condval' ){
 print NR
 }
-} END{ } ' ./data/$fromr )
-break
-else echo not a number
-fi
-fi
-done
-else 
-read -p "Please Enter condition value: " condval
-condition_row=$(
-awk -v condv="$condval" ' BEGIN{FS=":"} { 
+} END{ } ' ./data/$fromr)
+          break
+        else
+          echo not a number
+        fi
+      fi
+    done
+  else
+    read -p "Please Enter condition value: " condval
+    condition_row=$(
+      awk -v condv="$condval" ' BEGIN{FS=":"} { 
 if ( $'$wno' == condv){
 print NR
 }
 } END{ } ' ./data/$fromr
-)
-fi
-wherer=$condition_row
+    )
+  fi
+  wherer=$condition_row
 }
+
 
 
 function selwhere {
@@ -389,6 +454,7 @@ fi
 
 
 
+
 function table_menu {
   while true; do
     echo "1) CreateTable     2) ListTables      3) DropTable"
@@ -409,6 +475,7 @@ function table_menu {
       ;;
     4)
       # Implement insertion into table functionality
+      InsertIntoTable
       ;;
     5)
       # Implement select from table functionality
@@ -421,9 +488,8 @@ function table_menu {
       where
       wherer=($wherer)
       del=""
-      for i in "${wherer[@]}"
-      do
-      del+=$i"d;"
+      for i in "${wherer[@]}"; do
+        del+=$i"d;"
       done
       sed -i "$del" ./data/$fromr
 
@@ -454,6 +520,53 @@ function table_menu {
     esac
   done
 }
-
-
-table_menu
+PS3="Choose a Number: "
+function main_menu {
+  while true; do
+    echo "1) CreateDB     3) ConnectToDB  5) Exit"
+    echo "2) ListDB       4) DropDB"
+    read -p "Choose a Number: " choice
+    case $choice in
+    1)
+      read -p "Please Enter Database Name: " DBname
+      if [ -e "./DataBases/$DBname" ]; then
+        echo "Database Already Exists"
+      else
+        mkdir -p "./DataBases/$DBname"
+        echo "Database Created"
+      fi
+      ;;
+    2)
+      if [[ -d "./DataBases" ]]; then
+        echo "Databases found : "
+        ls ./DataBases
+      else
+        echo "no databases found"
+      fi
+      ;;
+    3)
+      read -p "Please Enter Database Name: " DBname
+      if [ -e "./DataBases/$DBname" ]; then
+        table "./DataBases/$DBname"
+      else
+        echo "Database doesn't Exist"
+      fi
+      ;;
+    4)
+      read -p "Please Enter Database Name: " DBname
+      if [ -e "./DataBases/$DBname" ]; then
+        rm -r "./DataBases/$DBname"
+      else
+        echo "Database doesn't Exist"
+      fi
+      ;;
+    +([Ee][xX][Ii][tT]) | 5)
+      break
+      ;;
+    *)
+      echo "Invalid option. Please choose a valid number."
+      ;;
+    esac
+  done
+}
+main_menu
