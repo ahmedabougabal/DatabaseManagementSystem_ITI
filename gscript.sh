@@ -282,178 +282,151 @@ print NR
   wherer=$condition_row
 }
 
-
-
 function selwhere {
-meta=$(awk ' BEGIN{FS=","} {  
+  meta=$(awk ' BEGIN{FS=","} {  
   for(i = 1; i<=NF ; i++)
     {
     print $i
     }
     } END{} ' ./meta/$fromr.meta)
-wtype=-1
-wno=-1
-echo select the condition column
-select wh in $meta
-do
-if [[ $wh == "" ]]
-then 
-echo enter valid number
-else
-wtype=$wh
-wno=$REPLY
-break
-fi
-done
+  wtype=-1
+  wno=-1
+  echo select the condition column
+  select wh in $meta; do
+    if [[ $wh == "" ]]; then
+      echo enter valid number
+    else
+      wtype=$wh
+      wno=$REPLY
+      break
+    fi
+  done
 
-# metaar=($meta)
-# echo ${#metaar[@]}
-declare -i swno=-1
-echo select the selected column
-select wh in all $meta
-do
-if [[ $wh == "" ]]
-then 
-echo enter valid number
-else
-swno=$REPLY-1
-break
-fi
-done
+  # metaar=($meta)
+  # echo ${#metaar[@]}
+  declare -i swno=-1
+  echo select the selected column
+  select wh in all $meta; do
+    if [[ $wh == "" ]]; then
+      echo enter valid number
+    else
+      swno=$REPLY-1
+      break
+    fi
+  done
 
-
-if [[ $(echo $wtype |cut -d ":" -f 2) == "int" ]]
-then 
-echo select the condition op
-select op in "==" "<=" ">=" "<" ">"
-do
-if [[ $op == "" ]]
-then 
-echo enter valid number
-else
-read -p "Please Enter condition value: " condval
-if [[ $condval =~ ^[1-9]+$ ]]
-then 
-awk ' BEGIN{FS=":"} { 
+  if [[ $(echo $wtype | cut -d ":" -f 2) == "int" ]]; then
+    echo select the condition op
+    select op in "==" "<=" ">=" "<" ">"; do
+      if [[ $op == "" ]]; then
+        echo enter valid number
+      else
+        read -p "Please Enter condition value: " condval
+        if [[ $condval =~ ^[1-9]+$ ]]; then
+          awk ' BEGIN{FS=":"} { 
 if ( $'$wno' '$op' '$condval' ){
 print $'$swno'
 }
-} END{ } ' ./data/$fromr 
-break
-else echo not a number
-fi
-fi
-done
-else 
-read -p "Please Enter condition value: " condval
-awk -v condv="$condval" ' BEGIN{FS=":"} { 
+} END{ } ' ./data/$fromr
+          break
+        else
+          echo not a number
+        fi
+      fi
+    done
+  else
+    read -p "Please Enter condition value: " condval
+    awk -v condv="$condval" ' BEGIN{FS=":"} { 
 if ( $'$wno' == condv){
 print $'$swno'
 }
 } END{ } ' ./data/$fromr
-fi
+  fi
 }
 
-
-
 function updwhere {
-meta=$(awk ' BEGIN{FS=","} {  
+  meta=$(awk ' BEGIN{FS=","} {  
   for(i = 1; i<=NF ; i++)
     {
     print $i
     }
     } END{} ' ./meta/$fromr.meta)
-wtype=-1
-wno=-1
-upv=-1
-# metaar=($meta)
-# echo ${#metaar[@]}
-declare -i uwno=-1
-echo select the column to update
-select wh in $meta
-do
-if [[ $wh == "" ]]
-then 
-echo enter valid number
-else
-read -p "Please Enter updated value: " upvv
-upv=$upvv
-if [[ $REPLY == 1 ]] && [[ $upv == "" ]] ;then
-echo primary key cant be empty
-else 
-if [[ $(echo $wh |cut -d ":" -f 2) == "int" ]]
-then
-if [[ ! $upv =~ ^[1-9]+$ ]]
-then
-echo this column takes int
-else
-uwno=$REPLY
-break
-fi
-else
-uwno=$REPLY
-break
-fi
-fi
-fi
-done
+  wtype=-1
+  wno=-1
+  upv=-1
+  # metaar=($meta)
+  # echo ${#metaar[@]}
+  declare -i uwno=-1
+  echo select the column to update
+  select wh in $meta; do
+    if [[ $wh == "" ]]; then
+      echo enter valid number
+    else
+      read -p "Please Enter updated value: " upvv
+      upv=$upvv
+      if [[ $REPLY == 1 ]] && [[ $upv == "" ]]; then
+        echo primary key cant be empty
+      else
+        if [[ $(echo $wh | cut -d ":" -f 2) == "int" ]]; then
+          if [[ ! $upv =~ ^[1-9]+$ ]]; then
+            echo this column takes int
+          else
+            uwno=$REPLY
+            break
+          fi
+        else
+          uwno=$REPLY
+          break
+        fi
+      fi
+    fi
+  done
 
+  echo select the condition column
+  select wh in $meta; do
+    if [[ $wh == "" ]]; then
+      echo enter valid number
+    else
+      wtype=$wh
+      wno=$REPLY
+      break
+    fi
+  done
 
-echo select the condition column
-select wh in $meta
-do
-if [[ $wh == "" ]]
-then 
-echo enter valid number
-else
-wtype=$wh
-wno=$REPLY
-break
-fi
-done
-
-if [[ $(echo $wtype |cut -d ":" -f 2) == "int" ]]
-then 
-echo select the condition op
-select op in "==" "<=" ">=" "<" ">"
-do
-if [[ $op == "" ]]
-then 
-echo enter valid number
-else
-if [[ $REPLY != 1 ]] && [[ $uwno == 1 ]] ;then
-echo primary key must be unique
-break
-fi
-read -p "Please Enter condition value: " condval
-if [[ $condval =~ ^[1-9]+$ ]]
-then 
-awk -v upval=$upv ' BEGIN{FS=":"} { 
+  if [[ $(echo $wtype | cut -d ":" -f 2) == "int" ]]; then
+    echo select the condition op
+    select op in "==" "<=" ">=" "<" ">"; do
+      if [[ $op == "" ]]; then
+        echo enter valid number
+      else
+        if [[ $REPLY != 1 ]] && [[ $uwno == 1 ]]; then
+          echo primary key must be unique
+          break
+        fi
+        read -p "Please Enter condition value: " condval
+        if [[ $condval =~ ^[1-9]+$ ]]; then
+          awk -v upval=$upv ' BEGIN{FS=":"} { 
 if ( $'$wno' '$op' '$condval' ){
     $'$uwno' = upval
 }
 print
-} END{ } '  OFS=: ./data/$fromr > temp && mv temp ./data/$fromr 
-break
-else echo not a number
-fi
-fi
-done
-else 
-read -p "Please Enter condition value: " condval
-awk -v condv="$condval" -v upval=$upv ' BEGIN{FS=":"} { 
+} END{ } ' OFS=: ./data/$fromr >temp && mv temp ./data/$fromr
+          break
+        else
+          echo not a number
+        fi
+      fi
+    done
+  else
+    read -p "Please Enter condition value: " condval
+    awk -v condv="$condval" -v upval=$upv ' BEGIN{FS=":"} { 
 if ( $'$wno' == condv){
     $'$uwno' = upval
 }
 print
-} END{ } '  OFS=: ./data/$fromr > temp && mv temp ./data/$fromr 
-fi
+} END{ } ' OFS=: ./data/$fromr >temp && mv temp ./data/$fromr
+  fi
 }
-
-
-
-
-
 
 function table_menu {
   while true; do
@@ -479,7 +452,7 @@ function table_menu {
       ;;
     5)
       # Implement select from table functionality
-      from 
+      from
       selwhere
       ;;
     6)
@@ -498,7 +471,7 @@ function table_menu {
       ;;
     7)
       # Implement update table functionality
-      from 
+      from
       updwhere
       ;;
       #* for handling several user attemps to type the word "Exit"
