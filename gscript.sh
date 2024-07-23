@@ -257,7 +257,7 @@ function where {
         echo enter valid number
       else
         read -p "Please Enter condition value: " condval
-        if [[ $condval =~ ^[1-9]+$ ]]; then
+        if [[ $condval =~ ^[0-9]+$ ]]; then
           condition_row=$(awk ' BEGIN{FS=":"} { 
 if ( $'$wno' '$op' '$condval' ){
 print NR
@@ -322,7 +322,7 @@ function selwhere {
         echo enter valid number
       else
         read -p "Please Enter condition value: " condval
-        if [[ $condval =~ ^[1-9]+$ ]]; then
+        if [[ $condval =~ ^[0-9]+$ ]]; then
           awk ' BEGIN{FS=":"} { 
 if ( $'$wno' '$op' '$condval' ){
 print $'$swno'
@@ -368,7 +368,7 @@ function updwhere {
         echo primary key cant be empty
       else
         if [[ $(echo $wh | cut -d ":" -f 2) == "int" ]]; then
-          if [[ ! $upv =~ ^[1-9]+$ ]]; then
+          if [[ ! $upv =~ ^[0-9]+$ ]]; then
             echo this column takes int
           else
             uwno=$REPLY
@@ -404,7 +404,7 @@ function updwhere {
           break
         fi
         read -p "Please Enter condition value: " condval
-        if [[ $condval =~ ^[1-9]+$ ]]; then
+        if [[ $condval =~ ^[0-9]+$ ]]; then
           awk -v upval=$upv ' BEGIN{FS=":"} { 
 if ( $'$wno' '$op' '$condval' ){
     $'$uwno' = upval
