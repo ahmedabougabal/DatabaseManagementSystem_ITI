@@ -1,9 +1,9 @@
-# !/user/bin/bash
+#!/usr/bin/bash
 shopt -s extglob
 export LC_COLLATE=C #! enable case sensitivity
 
 function table {
-  cd $1
+  cd "$1"
   echo "Connected to database: $(basename $1)" #basename here returns the name of the DB without mentioning the preceding path
   table_menu
 }
@@ -37,7 +37,7 @@ function isUnique() {
 function CreateTable() {
   echo "please enter a table name"
   read tableName
-  if [[ ! "$tableName" =~ ^[!@#^*$~()_-]$ ]]; then
+  if [[ "$tableName" =~ ^[!@#^*$~()_-,/]$ ]]; then
     echo "invalid table name"
     return 1
   fi
@@ -46,12 +46,16 @@ function CreateTable() {
     return 1
   fi
   #! meta file creation
-  metaFile="$tableName.meta"
-  metaFile="$tableName.meta"
-  touch metaFile
+  metaFile="meta/$tableName.meta"
+  mkdir -p meta
+  touch "$metaFile"
+
+  #! data directory creation
+  dataFile="data/$tableName.data"
+  mkdir -p data
+  touch "$dataFile"
 
   #* ask for the primary key
-  declare -i pk
   echo "Please type in the primary key column name"
   read pkColName
   echo "Please type in the primary key type (int/string)"
@@ -63,72 +67,93 @@ function CreateTable() {
     return 1
   fi
   if ! isUnique; then
-  if ! isUnique; then
     return 1
   fi
 
   #* adding new columns
-  cols=("$pkColName:$pkType")
+  cols=("$pk")
   while true; do
     echo "Do you want to add another column? (yes/no)"
     # The -r option in the read command is used to prevent backslashes from being interpreted as escape characters
     read -r response
-    if [[ "$response" == "no" ]]; then
+    if [[ "$response" =~ ^[Nn][Oo]?$ ]]; then
       break
     fi
-    else
-    echo "please type in the column name"
-    read -r colName
-    echo "please type in the column type"
-    read -r colType
-    cols+={"$colName:$colType"}
+    if [[ "$response" =~ ^[yY][Ee][Ss]?$ ]]; then
+      echo "please type in the column name"
+      read -r colName
+      echo "please type in the column type"
+      read -r colType
+      cols+=("$colName,$colType")
+    fi
   done
 
-  #* now that everything is validated, write the metadata into the file
-  for col in "$cols[@]"; do
-    echo $col >>$metaFile
+  #* now that everything is validated
+  for col in "${cols[@]}"; do
+    echo "$col" >>"$metaFile"
   done
-  echo "Table $tableName is created successfully with primary key '$pk'."
+  echo "Table $tableName is created successfully with primary key '$pkColName'."
+}
 
+function ListTables() {
+  if [ -d "./DataBases/$DBname/meta" ] && [ -d "./DataBases/$DBname/data" ]; then
+    echo "Meta data for the tables of database $DBname is"
+    ls "./DataBases/$DBname/meta"/*.meta
+    echo "Data for the tables of database $DBname is "
+    ls "./DataBases/$DBname/data"/*.data
+  else
+    echo "no tables yet created"
+  fi
 }
 
 function table_menu {
-  PS3="Choose a Table Option: "
-  select option in CreateTable ListTables DropTable InsertIntoTable SelectFromTable DeleteFromTable UpdateTable Exit; do
-    case $option in
-    "CreateTable")
-      # Table Creation Implementation
+  while true; do
+    echo "1) CreateTable     2) ListTables      3) DropTable"
+    echo "4) InsertIntoTable 5) SelectFromTable 6) DeleteFromTable"
+    echo "7) UpdateTable     8) Exit"
+    read -p "Choose a Table Option: " choice
+    case $choice in
+    1 | +[cC][rR][Ee][aA][Tt][eE][Tt][Aa][bB][Ll][eE])
       CreateTable
       ;;
-    "ListTables")
-      # list tables functionality
+    2 | +[Ll][Ss])
+      # Implement list table functionality
+      ListTables
       ;;
-    "DropTable")
+    3)
       # Implement drop table functionality
       ;;
-    "InsertIntoTable")
+    4)
       # Implement insertion into table functionality
       ;;
-    "SelectFromTable")
+    5)
       # Implement select from table functionality
       ;;
-    "DeleteFromTable")
+    6)
       # Implement delete from table functionality
       ;;
-    "UpdateTable")
+    7)
       # Implement update table functionality
       ;;
       #* for handling several user attemps to type the word "Exit"
-    +([Ee][Xx][Ii][Tt]))
-      break
+    +([Ee][xX][Ii][tT]) | 8)
+      while true; do
+        read -p "Are you sure you want to exit? (yes/no): " confirm
+        if [[ "$confirm" =~ ^[yY][Ee][Ss]$ ]]; then
+          break 2 # Break out of both the inner and outer loops
+        elif [[ "$confirm" =~ ^[nN][oO]$ ]]; then
+          break # Break out of the inner loop to continue in the outer loop
+        else
+          echo "Invalid input. Please enter 'yes' or 'no'."
+        fi
+      done
+      ;;
+    *)
+      echo "Invalid option. Please choose a valid number."
       ;;
     esac
   done
 }
-
-
-
-table_menu
 
 
 table_menu
