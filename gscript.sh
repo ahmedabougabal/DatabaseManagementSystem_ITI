@@ -4,13 +4,12 @@ export LC_COLLATE=C #! enable case sensitivity
 
 function table {
   cd $1
-  echo "Connected to database: $(basename $1)" #basename here returns the name of the DB
-  #without mentioning the preceding path
-  table_menu #function call
+  echo "Connected to database: $(basename $1)" #basename here returns the name of the DB without mentioning the preceding path
+  table_menu
 }
 
 function isTableFound() {
-  if [[ -e "$1.meta" ]]; then
+  if [[ -e "meta/$1.meta" ]]; then
     return 0
   else
     return 1
@@ -26,10 +25,10 @@ function pkValidate() {
 }
 
 function isUnique() {
-  if [[ -f "$tableName.data" ]]; then
-    if grep -q "^$pk:" "$tableName.data"; then
+  if [[ -f "data/$tableName.data" ]]; then
+    if grep -q "^$pk:" "data/$tableName.data"; then
       echo "this $pk already exists inside the table $tableName"
-      rm $metaFile
+      rm "$metaFile"
       return 1
     fi
   fi
@@ -42,29 +41,53 @@ function CreateTable() {
     echo "invalid table name"
     return 1
   fi
-  if isTableFound $tableName; then
+  if isTableFound "$tableName"; then
     echo "Table $tableName Already Exists"
     return 1
   fi
   #! meta file creation
   metaFile="$tableName.meta"
+  metaFile="$tableName.meta"
   touch metaFile
 
   #* ask for the primary key
   declare -i pk
-  echo "Please type in the primary key"
-  read pk
+  echo "Please type in the primary key column name"
+  read pkColName
+  echo "Please type in the primary key type (int/string)"
+  read pkType
 
   # primary key validation (check for both NULL and uniqueness)
+  pk="${pkColName}:${pkType}"
   if ! pkValidate; then
     return 1
   fi
   if ! isUnique; then
+  if ! isUnique; then
     return 1
   fi
 
-  #* now that everything is validated, write the PK into the tableName.data
-  echo "primaryKey :$pk" >>"$metaFile"
+  #* adding new columns
+  cols=("$pkColName:$pkType")
+  while true; do
+    echo "Do you want to add another column? (yes/no)"
+    # The -r option in the read command is used to prevent backslashes from being interpreted as escape characters
+    read -r response
+    if [[ "$response" == "no" ]]; then
+      break
+    fi
+    else
+    echo "please type in the column name"
+    read -r colName
+    echo "please type in the column type"
+    read -r colType
+    cols+={"$colName:$colType"}
+  done
+
+  #* now that everything is validated, write the metadata into the file
+  for col in "$cols[@]"; do
+    echo $col >>$metaFile
+  done
   echo "Table $tableName is created successfully with primary key '$pk'."
 
 }
@@ -103,6 +126,9 @@ function table_menu {
   done
 }
 
+
+
+table_menu
 
 
 table_menu

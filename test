@@ -7,7 +7,7 @@ f=test-data
 #from
 fromr=""
 function from {
-l=$(ls ./)
+l=$(ls ./data)
 from=0
 echo select the table 
 select fr in $l
@@ -36,7 +36,7 @@ meta=$(awk ' BEGIN{FS=","} {
     {
     print $i
     }
-    } END{} ' ./test-data-meta)
+    } END{} ' ./meta/$fromr.meta)
 wtype=-1
 wno=-1
 select wh in $meta
@@ -68,7 +68,7 @@ condition_row=$(awk ' BEGIN{FS=":"} {
 if ( $'$wno' '$op' '$condval' ){
 print NR
 }
-} END{ } ' test-data )
+} END{ } ' ./data/$fromr )
 break
 else echo not a number
 fi
@@ -81,7 +81,7 @@ awk -v condv="$condval" ' BEGIN{FS=":"} {
 if ( $'$wno' == condv){
 print NR
 }
-} END{ } ' test-data 
+} END{ } ' ./data/$fromr
 )
 fi
 wherer=$condition_row
@@ -94,8 +94,7 @@ wherer=$condition_row
 
 #delete part
 
-# from
-# echo this is the result of from $fromr 
+from
 where
 echo this is the result of where : $wherer
 wherer=($wherer)
@@ -104,7 +103,7 @@ for i in "${wherer[@]}"
 do
 del+=$i"d;"
 done
-sed -i "$del" test-data 
+sed -i "$del" ./data/$fromr
 
 
 
