@@ -192,6 +192,75 @@ wherer=$condition_row
 }
 
 
+function selwhere {
+meta=$(awk ' BEGIN{FS=","} {  
+  for(i = 1; i<=NF ; i++)
+    {
+    print $i
+    }
+    } END{} ' ./meta/$fromr.meta)
+wtype=-1
+wno=-1
+echo select the condition column
+select wh in $meta
+do
+if [[ $wh == "" ]]
+then 
+echo enter valid number
+else
+wtype=$wh
+wno=$REPLY
+break
+fi
+done
+
+# metaar=($meta)
+# echo ${#metaar[@]}
+declare -i swno=-1
+echo select the selected column
+select wh in all $meta
+do
+if [[ $wh == "" ]]
+then 
+echo enter valid number
+else
+swno=$REPLY-1
+break
+fi
+done
+
+
+if [[ $(echo $wtype |cut -d ":" -f 2) == "int" ]]
+then 
+echo select the condition op
+select op in "==" "<=" ">=" "<" ">"
+do
+if [[ $op == "" ]]
+then 
+echo enter valid number
+else
+read -p "Please Enter condition value: " condval
+if [[ $condval =~ ^[1-9]+$ ]]
+then 
+awk ' BEGIN{FS=":"} { 
+if ( $'$wno' '$op' '$condval' ){
+print $'$swno'
+}
+} END{ } ' ./data/$fromr 
+break
+else echo not a number
+fi
+fi
+done
+else 
+read -p "Please Enter condition value: " condval
+awk -v condv="$condval" ' BEGIN{FS=":"} { 
+if ( $'$wno' == condv){
+print $'$swno'
+}
+} END{ } ' ./data/$fromr
+fi
+}
 
 
 
@@ -219,6 +288,8 @@ function table_menu {
       ;;
     5)
       # Implement select from table functionality
+      from 
+      selwhere
       ;;
     6)
 
