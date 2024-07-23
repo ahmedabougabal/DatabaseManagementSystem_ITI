@@ -25,8 +25,8 @@ function pkValidate() {
 }
 
 function isUnique() {
-  if [[ -f "data/$tableName.data" ]]; then
-    if grep -q "^$pk:" "data/$tableName.data"; then
+  if [[ -f "data/$tableName" ]]; then
+    if grep -q "^$pk:" "data/$tableName"; then
       echo "this $pk already exists inside the table $tableName"
       rm "$metaFile"
       return 1
@@ -51,7 +51,7 @@ function CreateTable() {
   touch "$metaFile"
 
   #! data directory creation
-  dataFile="data/$tableName.data"
+  dataFile="data/$tableName"
   mkdir -p data
   touch "$dataFile"
 
@@ -69,7 +69,7 @@ function CreateTable() {
   if ! isUnique; then
     return 1
   fi
-
+  #* now that everything is validated
   #* adding new columns
   cols=("$pk")
   while true; do
@@ -84,25 +84,52 @@ function CreateTable() {
       read -r colName
       echo "please type in the column type"
       read -r colType
-      cols+=("$colName,$colType")
+      cols+=("${colName}:${colType}")
     fi
   done
 
-  #* now that everything is validated
+  #! REQUIRED FORMAT: id:int,username:string,email:string,birthdate:string
+  columns=""
   for col in "${cols[@]}"; do
-    echo "$col" >>"$metaFile"
+    if [[ -n "$columns" ]]; then # n flag checks if columns string isnot empty
+      columns+=","
+    fi
+    columns+="$col"
   done
+  echo "$columns" >>"$metaFile"
   echo "Table $tableName is created successfully with primary key '$pkColName'."
 }
 
 function ListTables() {
-  if [ -d "./DataBases/$DBname/meta" ] && [ -d "./DataBases/$DBname/data" ]; then
-    echo "Meta data for the tables of database $DBname is"
-    ls "./DataBases/$DBname/meta"/*.meta
-    echo "Data for the tables of database $DBname is "
-    ls "./DataBases/$DBname/data"/*.data
+  if [ -d "./meta" ] && [ -d "./data" ]; then
+    echo "Meta data for the tables is"
+    ls "./meta"/*.meta
+    echo "Data for the tables is "
+    ls "./data"/*
   else
     echo "no tables yet created"
+  fi
+}
+
+
+function DropTable() {
+  echo "please enter the table name you wish to drop"
+  read dropFile
+  #* define files to be dropped
+  metaFile="./meta/$dropFile.meta"
+  dataFile="./data/$dropFile"
+  #! check for their existence
+  if [[ -e "$metaFile" ]] || [[ -e "$dataFile" ]]; then
+    if [[ -e "$metaFile" ]]; then
+      rm "$metaFile"
+      echo "Meta file $metaFile is dropped successfully."
+    fi
+    if [[ -e "$dataFile" ]]; then
+      rm "$dataFile"
+      echo "Data file $dataFile is dropped successfully."
+    fi
+  else
+    echo "Table $dropFile does not exist."
   fi
 }
 
@@ -266,6 +293,7 @@ fi
 
 
 
+
 function table_menu {
   while true; do
     echo "1) CreateTable     2) ListTables      3) DropTable"
@@ -282,6 +310,7 @@ function table_menu {
       ;;
     3)
       # Implement drop table functionality
+      DropTable
       ;;
     4)
       # Implement insertion into table functionality
