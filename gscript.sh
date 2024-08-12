@@ -19,7 +19,6 @@ function isTableFound() {
 function pkValidate() {
   if [ -z "$pk" ]; then
     echo "Primary key can't be NULL/Empty"
-    rm "$metaFile"
     return 1
   fi
 }
@@ -27,8 +26,7 @@ function pkValidate() {
 function isUnique() {
   if [[ -f "data/$tableName" ]]; then
     if grep -q "^$pk:" "data/$tableName"; then
-      echo "this $pk already exists inside the table $tableName"
-      rm "$metaFile"
+      echo "the primary key $pk already exists inside the table $tableName"
       return 1
     fi
   fi
@@ -59,7 +57,16 @@ function CreateTable() {
   echo "Please type in the primary key column name"
   read pkColName
   echo "Please type in the primary key type (int/string)"
-  read pkType
+
+  # Validate column type
+  while true; do
+    read pkType
+    if [[ "$pkType" == "int" || "$pkType" == "string" ]]; then
+      break
+    else
+      echo "Invalid type. Please enter 'int' or 'string'."
+    fi
+  done
 
   # primary key validation (check for both NULL and uniqueness)
   pk="${pkColName}:${pkType}"
@@ -74,7 +81,6 @@ function CreateTable() {
   cols=("$pk")
   while true; do
     echo "Do you want to add another column? (yes/no)"
-    # The -r option in the read command is used to prevent backslashes from being interpreted as escape characters
     read -r response
     if [[ "$response" =~ ^[Nn]+$ ]]; then
       break
@@ -83,7 +89,17 @@ function CreateTable() {
       echo "please type in the column name"
       read -r colName
       echo "please type in the column type"
-      read -r colType
+
+      # Validate column type for additional columns
+      while true; do
+        read -r colType
+        if [[ "$colType" == "int" || "$colType" == "string" ]]; then
+          break
+        else
+          echo "Invalid type. Please enter 'int' or 'string'."
+        fi
+      done
+
       cols+=("${colName}:${colType}")
     fi
   done
@@ -157,12 +173,12 @@ function validateInsertedVals() {
       if [[ "$colType" == "int" ]]; then
         if ! [[ "$value" =~ ^-?[0-9]+$ ]]; then
           echo "Invalid value for $colName. It should be an integer."
-          continue
+          continue # Continue loop without altering files
         fi
       elif [[ "$colType" == "string" ]]; then
         if [[ -z "$value" ]]; then
           echo "Invalid value for $colName. It should be a non-empty string."
-          continue
+          continue # Continue loop without altering files
         fi
       fi
 
@@ -170,10 +186,10 @@ function validateInsertedVals() {
       if [[ "${col%%:*}" == "${columns_ref[0]%%:*}" ]]; then
         pk="$value"
         if ! pkValidate; then
-          continue
+          continue # Continue loop without altering files
         fi
         if ! isUnique; then
-          continue
+          continue # Continue loop without altering files
         fi
       fi
 
@@ -257,7 +273,7 @@ function where {
         echo enter valid number
       else
         read -p "Please Enter condition value: " condval
-        if [[ $condval =~ ^[1-9]+$ ]]; then
+        if [[ $condval =~ ^[0-9]+$ ]]; then
           condition_row=$(awk ' BEGIN{FS=":"} { 
 if ( $'$wno' '$op' '$condval' ){
 print NR
@@ -322,7 +338,7 @@ function selwhere {
         echo enter valid number
       else
         read -p "Please Enter condition value: " condval
-        if [[ $condval =~ ^[1-9]+$ ]]; then
+        if [[ $condval =~ ^[0-9]+$ ]]; then
           awk ' BEGIN{FS=":"} { 
 if ( $'$wno' '$op' '$condval' ){
 print $'$swno'
@@ -368,7 +384,7 @@ function updwhere {
         echo primary key cant be empty
       else
         if [[ $(echo $wh | cut -d ":" -f 2) == "int" ]]; then
-          if [[ ! $upv =~ ^[1-9]+$ ]]; then
+          if [[ ! $upv =~ ^[0-9]+$ ]]; then
             echo this column takes int
           else
             uwno=$REPLY
@@ -404,7 +420,7 @@ function updwhere {
           break
         fi
         read -p "Please Enter condition value: " condval
-        if [[ $condval =~ ^[1-9]+$ ]]; then
+        if [[ $condval =~ ^[0-9]+$ ]]; then
           awk -v upval=$upv ' BEGIN{FS=":"} { 
 if ( $'$wno' '$op' '$condval' ){
     $'$uwno' = upval
@@ -479,6 +495,8 @@ function table_menu {
       while true; do
         read -p "Are you sure you want to exit? (yes/no): " confirm
         if [[ "$confirm" =~ ^[yY][Ee][Ss]$ ]]; then
+          cd ..
+          cd ..
           break 2 # Break out of both the inner and outer loops
         elif [[ "$confirm" =~ ^[nN][oO]$ ]]; then
           break # Break out of the inner loop to continue in the outer loop
@@ -537,9 +555,36 @@ function main_menu {
       break
       ;;
     *)
+      pwd
       echo "Invalid option. Please choose a valid number."
       ;;
     esac
   done
 }
 main_menu
+
+#! testing the database (instructions)
+#* create the following:
+# db => iti
+# table -> student (3 cols)
+# id => int (pk)
+# name : mina
+# age : 34
+# insert records
+# 22-> mina el haraaa2 - > 30
+# 20 -> mostafa ->  24
+# insert 22 in pk (dupilcated)
+# -------
+# insert string in the age
+# select
+# update from mina to ahmed
+# select again
+#delete ahmed
+#select
+#select
+# drop tables
+# --------------------------------
+#list
+# drop db
+#list
+#! last stage : wait till eng mina spoils the code
